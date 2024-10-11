@@ -25,24 +25,16 @@ def open_catalog_pages(count: int):
             registry[package_id]["display_name"] = display_name
             registry[package_id]["versions"] = {}
           registry[package_id]["versions"][package_version] = item['@id']
-          # package_registration = {
-          #   "version": package_version,
-          #   "link": item['@id']
-          # }
-          # registry[package_id].append(package_registration)
         elif item['@type'] == 'nuget:PackageDelete':
           if package_id not in registry:
-            # if package_id != 'cnova.nuget.dll':
-              # raise Exception(f'Package {package_id} not found in registry and trying to be deleted')
+            # raise Exception(f'Package {package_id} not found in registry and trying to be deleted')
             continue
           if package_version not in registry[package_id]["versions"]:
-            # if (package_version != "1.0.0.0" and package_id != 'mmbotjenkins') and (package_version != "0.1.0.0001" and package_id != 'picoware.security.contracts') and (package_version != "1.0.25.0" and package_id != 'unblockapp.libcsharp'):
-              # raise Exception(f'Version {package_version} of package {package_id} not found in registry and trying to be deleted')
+            # raise Exception(f'Version {package_version} of package {package_id} not found in registry and trying to be deleted')
             continue
           del registry[package_id]["versions"][package_version]          
           if len(registry[package_id]["versions"]) == 0:
             del registry[package_id]
-          # print(f'Processing package {packageId} version {package_registration["version"]}')
   output_file = 'registry.json'
   with open(output_file, 'w') as f:
     json.dump(registry, f, indent=2)
@@ -52,7 +44,7 @@ def download_catalog():
   cat_url = 'https://api.nuget.org/v3/catalog0/index.json'
   response = requests.get(cat_url)
   if response.status_code != 200:
-    print(f'Failed to download catalog index. Status code: {response.status_code}')
+    raise Exception(f'Failed to download catalog index. Status code: {response.status_code}')
   
   with open('CatalogIndex.json', 'w') as f:
     json.dump(response.json(), f, indent=2)
