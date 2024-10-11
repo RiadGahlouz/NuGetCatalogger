@@ -1,6 +1,8 @@
 import os
 import json
 import requests
+import aiohttp
+import asyncio
 
 def open_catalog_pages(count: int):
   registry = {}
@@ -49,8 +51,24 @@ def download_catalog():
   with open('CatalogIndex.json', 'w') as f:
     json.dump(response.json(), f, indent=2)
   print('CatalogIndex.json has been downloaded and saved.')
+
+async def download_cat_page_async(page_url: str, session: aiohttp.ClientSession):
+  # The page is not downloaded yet
+  page_name = page_url.split('/')[-1]
+  if os.path.exists(f'pages/{page_name}'):
+    print(f'Catalog page {page_name} already exists. Skipping download.')
+    return
+  try:
+    async with session.get(url=page_url) as response:
+      # resp = await response.read()
+      with open(f'pages/{page_name}', 'w') as f:
+        json.dump(await response.json(), f, indent=2)
+      print(f'Catalog page {page_name} has been downloaded and saved.')
+  except Exception as e:
+    print("Failed to download catalog page {} due to {}.".format(page_name, e.__class__))
   
-def download_cat_pages() -> int:
+
+async def download_cat_pages() -> int:
   download_catalog()
   if not os.path.exists('pages'):
     os.makedirs('pages')
@@ -59,23 +77,12 @@ def download_cat_pages() -> int:
   with open('CatalogIndex.json', 'r') as f:
     data = json.load(f)
     page_count = data['count']
-    for i, item in enumerate(data['items']):
-      page_url = item['@id']
-      page_name = page_url.split('/')[-1]
-      if os.path.exists(f'pages/{page_name}'):
-        print(f'Catalog page {page_name} already exists. Skipping download.')
-        continue
-      
-      # The page is not downloaded yet
-      response = requests.get(page_url)
-      if response.status_code != 200:
-        print(f'Failed to download catalog page {page_name}. Status code: {response.status_code}')
-        continue
-      with open(f'pages/{page_name}', 'w') as f:
-        json.dump(response.json(), f, indent=2)
-      print(f'({i}/{page_count}) Catalog page {page_name} has been downloaded and saved.')
+    
+  async with aiohttp.ClientSession() as session:
+    ret = await asyncio.gather(*(download_cat_page_async(item['@id'], session) for item in data['items']))
+
   return page_count
 
 if __name__ == "__main__":
-  page_count = download_cat_pages()
+  page_count = asyncio.run(download_cat_pages())
   open_catalog_pages(count=page_count)
