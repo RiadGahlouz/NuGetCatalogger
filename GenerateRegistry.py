@@ -61,11 +61,12 @@ async def download_cat_page_async(page_url: str, session: aiohttp.ClientSession)
   try:
     async with session.get(url=page_url) as response:
       # resp = await response.read()
+      json_content = await response.json(content_type=None)
       with open(f'pages/{page_name}', 'w') as f:
-        json.dump(await response.json(), f, indent=2)
+        json.dump(json_content, f, indent=2)
       print(f'Catalog page {page_name} has been downloaded and saved.')
   except Exception as e:
-    print("Failed to download catalog page {} due to {}.".format(page_name, e.__class__))
+    print("Failed to download catalog page {} due to {}: {}".format(page_name, e.__class__, e))
   
 
 async def download_cat_pages() -> int:
